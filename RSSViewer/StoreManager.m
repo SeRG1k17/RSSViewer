@@ -83,22 +83,23 @@
 
 - (void)getRSSItemsForAttribute:(NSString *)attribute withPage:(NSInteger)page andCompletion:(ItemsCompletionBlock)completion {
     
+    __block NSInteger fetchingPage = page;
     [MagicalRecord saveWithBlock:^(NSManagedObjectContext * _Nonnull localContext) {
         
         NSPredicate *predicate = [NSPredicate predicateWithFormat:@"feedStyle==%@",attribute];
         NSArray *items = [Item MR_findAllWithPredicate:predicate inContext:localContext];
         
         if (items.count) {
-            NSInteger firstItem = page * maxFetchingCount;
+            NSInteger firstItem = fetchingPage * maxFetchingCount;
             if (firstItem < items.count) {
                 
                 NSInteger lastItem;
                 
-                NSInteger limit = items.count - maxFetchingCount;
-                if (limit > 0) {
+                NSInteger limit = items.count - firstItem;
+                if (limit > maxFetchingCount) {
                     lastItem = firstItem + maxFetchingCount;
                 } else {
-                    lastItem = items.count;
+                    lastItem = limit;
                 }
                 
                 NSRange range = NSMakeRange(firstItem, lastItem);
